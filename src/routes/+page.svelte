@@ -170,18 +170,18 @@
 
 <div class="mt-4 pl-4">
 	<h1
-		class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl"
+		class="font-BizUDPGothic mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl"
 	>
 		マルチポイント重心計算くん
 	</h1>
 
-	<p class="text-lg text-gray-700">
+	<p class="text-lg text-gray-700 font-BizUDPGothic">
 		GeoJSONファイルのURLを入力し、Load GeoJSONボタンを押してください。
 	</p>
-	<p class="text-lg text-gray-700">
+	<p class="text-lg text-gray-700 font-BizUDPGothic">
 		マルチポイント以外のGeoJSONファイルのURLを入れても何も起こりませんので要注意のこと。
 	</p>
-	<p class="mb-4 text-lg text-gray-700">URLでアクセスできるGeoJSONのみ対応。（改良予定です）</p>
+	<p class="mb-4 text-lg text-gray-700 font-BizUDPGothic">URLでアクセスできるGeoJSONのみ対応。（改良予定です）</p>
 
 	<!-- URLを入力するテキストボックスと、確定するボタンを表示する -->
 	<div class="w-full min-w-[800px] max-w-sm">

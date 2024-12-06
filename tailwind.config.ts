@@ -5,7 +5,10 @@ export default {
 	content: ['./src/**/*.{html,js,svelte,ts}'],
 
 	theme: {
-		extend: {}
+		extend: {},
+		fontFamily: {
+			'BizUDPGothic': ['"BIZ UDPGothic"', 'sans-serif'],
+		},
 	},
 
 	plugins: [containerQueries]
