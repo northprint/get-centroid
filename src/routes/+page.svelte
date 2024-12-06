@@ -47,9 +47,6 @@
 		}
 	});
 
-	let resultCentroidQuery = $state(new Promise(() => {}));
-	let resultGeoJsonQuery = $state(new Promise(() => {}));
-
 	let loadGeojsonFeatures: GeoJsonTypes.Feature[] = $state([]);
 
 	// MULTIPOINTの文字列を作るための配列たち
@@ -62,6 +59,9 @@
 
 	// 重心のテキスト
 	let centroidText = $state('');
+
+	// 地図のズームレベル
+	let zoom = $state(3.5);
 
 	// ボタンクリック時にGeoJSONを読み込んで重心を計算する
 	async function handleLoadGeoJSON() {
@@ -153,9 +153,9 @@
 
 <MapLibre
 	bind:map
+	bind:zoom
 	class="h-[60vh] min-h-[300px]"
 	style="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
-	zoom={3.5}
 	center={{ lng: 137, lat: 36 }}
 >
 	<NavigationControl />
@@ -170,18 +170,20 @@
 
 <div class="mt-4 pl-4">
 	<h1
-		class="font-BizUDPGothic mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl"
+		class="mb-4 font-BizUDPGothic text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl"
 	>
 		マルチポイント重心計算くん
 	</h1>
 
-	<p class="text-lg text-gray-700 font-BizUDPGothic">
+	<p class="font-BizUDPGothic text-lg text-gray-700">
 		GeoJSONファイルのURLを入力し、Load GeoJSONボタンを押してください。
 	</p>
-	<p class="text-lg text-gray-700 font-BizUDPGothic">
-		マルチポイント以外のGeoJSONファイルのURLを入れても何も起こりませんので要注意のこと。
+	<p class="font-BizUDPGothic text-lg text-gray-700">
+		マルチポイント以外のGeoJSONファイルのURLを入れるとエラーになりますので要注意のこと。
 	</p>
-	<p class="mb-4 text-lg text-gray-700 font-BizUDPGothic">URLでアクセスできるGeoJSONのみ対応。（改良予定です）</p>
+	<p class="mb-4 font-BizUDPGothic text-lg text-gray-700">
+		URLでアクセスできるGeoJSONのみ対応。（改良予定です）
+	</p>
 
 	<!-- URLを入力するテキストボックスと、確定するボタンを表示する -->
 	<div class="w-full min-w-[800px] max-w-sm">
@@ -199,6 +201,7 @@
 
 	{#if centroidText != ''}
 		<p class="mt-4 text-lg text-gray-700">重心の座標は{centroidText}です。</p>
+		<p class="text-lg text-gray-700">ズームレベルは{zoom}です。</p>
 	{/if}
 </div>
 <!-- 全面を覆うローディングコンテナ -->
