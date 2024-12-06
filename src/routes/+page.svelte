@@ -65,94 +65,89 @@
 
 	// ボタンクリック時にGeoJSONを読み込んで重心を計算する
 	async function handleLoadGeoJSON() {
+		const urlInput = document.getElementById('url') as HTMLInputElement;
+		const url = urlInput.value;
+
 		// textが空なら何もしない
-		if ((document.getElementById('url') as HTMLInputElement).value === '') {
+		if (url === '') {
 			return;
 		}
 
 		// ローディングフラグを立てる
 		loading = true;
 
-		// URLを取得
-		const url = (document.getElementById('url') as HTMLInputElement).value;
-
 		// 初期化
 		pointsArrayTemp.length = 0;
 		pointsArray.length = 0;
 		centroidText = '';
+		loadGeojsonFeatures.length = 0;
 
-		conn_prom.then(async () => {
-			const conn = await conn_prom;
-			conn.query(`
-				DROP TABLE IF EXISTS temp;
-				CREATE TABLE temp AS SELECT * FROM ST_Read('${url}');
-			`);
-		});
+		try {
+			await initializeDatabase(url);
+			await loadGeoJsonData();
+			await calculateCentroid();
+		} catch (e: any) {
+			alert(e.message);
+		} finally {
+			loading = false;
+		}
+	}
 
-		resultGeoJsonQuery = conn_prom.then(async () => {
-			const conn = await conn_prom;
-			return conn.query(`
-				SELECT ST_AsGeoJSON(geom) as geom FROM temp;
-			`);
-		});
+	async function initializeDatabase(url: string) {
+		const conn = await conn_prom;
+		await conn.query(`
+			DROP TABLE IF EXISTS temp;
+			CREATE TABLE temp AS SELECT * FROM ST_Read('${url}');
+		`);
+	}
 
-		conn_prom.then(async () => {
-			const result: Table<any> = (await resultGeoJsonQuery) as Table<any>;
-			const resultRows: StructRowProxy<any>[] = result.toArray();
+	async function loadGeoJsonData() {
+		const conn = await conn_prom;
+		const result: Table<any> = (await conn.query(`
+			SELECT ST_AsGeoJSON(geom) as geom FROM temp;
+		`)) as unknown as Table<any>;
+		const resultRows: StructRowProxy<any>[] = result.toArray();
 
-			for (let i = 0; i < resultRows.length; i++) {
-				const geometry = JSON.parse(resultRows[i].geom);
-				pointsArrayTemp.push(geometry.coordinates[0] + ' ' + geometry.coordinates[1]);
+		for (let i = 0; i < resultRows.length; i++) {
+			const geometry = JSON.parse(resultRows[i].geom);
+			pointsArrayTemp.push(geometry.coordinates[0] + ' ' + geometry.coordinates[1]);
 
-				loadGeojsonFeatures.push({
-					type: 'Feature',
-					properties: {},
-					geometry: geometry
-				});
-			}
-
-			// 読み込んだデータを地図に反映
-			geoJsonSource = {
-				type: 'FeatureCollection',
-				features: loadGeojsonFeatures
-			};
-
-			console.log(geoJsonSource);
-
-			// 重複排除
-			pointsArray = Array.from(new Set(pointsArrayTemp));
-			// 計算用のMULTIPOINT文字列を作成
-			pointsMultiString = 'MULTIPOINT(' + pointsArray.join(',') + ')';
-
-			// 計算して結果をGeoJSONで取得
-			try {
-				resultCentroidQuery = conn_prom.then(async () => {
-					const conn = await conn_prom;
-					return conn.query(`
-					SELECT ST_AsGeoJSON(ST_Centroid(ST_GeomFromText('${pointsMultiString}'))) as geom;
-				`);
-				});
-			} catch (e: any) {
-				alert(e.message);
-				loading = false;
-			}
-			const resultCentroid: Table<any> = (await resultCentroidQuery) as Table<any>;
-			const resultCentroidRows: StructRowProxy<any>[] = resultCentroid.toArray();
-
-			// 重心を地図に反映
-			resultGeoJsonSource = {
+			loadGeojsonFeatures.push({
 				type: 'Feature',
 				properties: {},
-				geometry: JSON.parse(resultCentroidRows[0].geom)
-			};
+				geometry: geometry
+			});
+		}
 
-			const centroid = JSON.parse(resultCentroidRows[0].geom).coordinates;
-			centroidText = centroid[0] + ', ' + centroid[1];
-			map?.flyTo({ center: centroid, zoom: 8 });
+		// 読み込んだデータを地図に反映
+		geoJsonSource = {
+			type: 'FeatureCollection',
+			features: loadGeojsonFeatures
+		};
 
-			// ローディングフラグを下ろす
-			loading = false;
-		});
+		// 重複排除
+		pointsArray = Array.from(new Set(pointsArrayTemp));
+		// 計算用のMULTIPOINT文字列を作成
+		pointsMultiString = 'MULTIPOINT(' + pointsArray.join(',') + ')';
+	}
+
+	async function calculateCentroid() {
+		const conn = await conn_prom;
+		const resultCentroid: Table<any> = (await conn.query(`
+			SELECT ST_AsGeoJSON(ST_Centroid(ST_GeomFromText('${pointsMultiString}'))) as geom;
+		`)) as unknown as Table<any>;
+		const resultCentroidRows: StructRowProxy<any>[] = resultCentroid.toArray();
+
+		// 重心を地図に反映
+		resultGeoJsonSource = {
+			type: 'Feature',
+			properties: {},
+			geometry: JSON.parse(resultCentroidRows[0].geom)
+		};
+
+		const centroid = JSON.parse(resultCentroidRows[0].geom).coordinates;
+		centroidText = centroid[0] + ', ' + centroid[1];
+		map?.flyTo({ center: centroid, zoom: 8 });
 	}
 </script>
 
